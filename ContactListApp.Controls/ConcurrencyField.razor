@@ -1,0 +1,25 @@
+﻿@typeparam TModel
+
+@if (Show) {
+	@if (IsDelta) {
+		<span class="alert alert-warning">
+			<strong>@Property(DbModel)</strong>
+		</span>
+	}
+	else {
+		<span class="alert alert-success">(no change)</span>
+	}
+}
+
+@code {
+
+	[Parameter] public TModel Model { get; set; }
+
+	[Parameter] public TModel DbModel { get; set; }
+
+	[Parameter] public Func<TModel, IComparable> Property { get; set; }
+
+	private bool Show => Model != null && DbModel != null;
+
+	private bool IsDelta => !Property(Model).Equals(Property(DbModel));
+}

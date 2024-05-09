@@ -1,0 +1,34 @@
+﻿@using ContactListApp.Server.Models
+@using Microsoft.AspNetCore.Identity
+@using Microsoft.Extensions.Primitives
+@inject SignInManager<ApplicationUser> SignInManager
+@inject UserManager<ApplicationUser> UserManager
+@addTagHelper *, Microsoft.AspNetCore.Mvc.TagHelpers
+
+@{
+	string returnUrl = "/";
+	if (Context.Request.Query.TryGetValue("returnUrl", out StringValues existingUrl)) {
+		returnUrl = existingUrl;
+	}
+}
+
+<ul class="navbar-nav">
+	@if (SignInManager.IsSignedIn(User)) {
+		<li class="nav-item">
+			<a class="nav-link text-dark" asp-area="Identity" asp-page="/Account/Manage/Index" title="Manage">Welcome, @User.Identity.Name!</a>
+		</li>
+		<li class="nav-item">
+			<form class="form-inline" asp-area="Identity" asp-page="/Account/Logout" asp-route-returnUrl="/" method="post">
+				<button type="submit" class="nav-link btn btn-link text-dark">Log out</button>
+			</form>
+		</li>
+	}
+	else {
+		<li class="nav-item">
+			<a class="nav-link text-dark" asp-area="Identity" asp-page="/Account/Register" asp-route-returnUrl="@returnUrl">Create an account</a>
+		</li>
+		<li class="nav-item">
+			<a class="nav-link text-dark" asp-area="Identity" asp-page="/Account/Login" asp-route-returnUrl="@returnUrl">Log in</a>
+		</li>
+	}
+</ul>

@@ -1,0 +1,100 @@
+﻿@using ContactListApp.Model
+@inject IContactFilters Filters
+
+@if (CurrentContact != null) {
+	<div class="row contact-detail">
+		<div class="@Columns.EditColumn text-right">
+			<a title="Edit" href="/edit/@CurrentContact?.Id">
+				&nbsp;📝&nbsp;
+			</a>
+			@if (CanDelete) {
+				<span @onclick="async () => await DeleteRequestAsync()" title="Delete"
+				      class="d-none d-sm-inline clickable red">
+					❌
+				</span>
+			}
+			else {
+				<span>&nbsp;</span>
+			}
+			&nbsp;
+		</div>
+		<div class="@Columns.GetClassForColumn(ContactFilterColumns.Name)">
+			<a href="@ViewLink" alt="View Details" title="View Details">
+				@Name
+			</a>
+		</div>
+		@if (!DeleteConfirmation) {
+			<div class="@Columns.GetClassForColumn(ContactFilterColumns.Phone)">
+				@CurrentContact.Phone
+			</div>
+			<div class="@Columns.GetClassForColumn(ContactFilterColumns.Street)">
+				@CurrentContact.Street
+			</div>
+			<div class="@Columns.GetClassForColumn(ContactFilterColumns.City)">
+				@CurrentContact.City
+			</div>
+			<div class="@Columns.GetClassForColumn(ContactFilterColumns.State)">
+				@CurrentContact.State
+			</div>
+			<div class="@Columns.GetClassForColumn(ContactFilterColumns.ZipCode)">
+				@CurrentContact.ZipCode
+			</div>
+		}
+		else {
+			<div class="@Columns.DeleteConfirmation">
+				<DeletePrompt Confirmation="ConfirmAsync"/>
+			</div>
+		}
+	</div>
+}
+
+@code {
+
+	public ColumnService Columns = new ColumnService();
+
+	[Parameter] public Contact CurrentContact { get; set; }
+
+	[CascadingParameter] public GridWrapper Wrapper { get; set; }
+
+	[Parameter] public EventCallback<Contact> DeleteContact { get; set; }
+
+	public bool CanDelete => !DeleteConfirmation &&
+	                         (Wrapper.DeleteRequestId == 0 || Wrapper.DeleteRequestId == CurrentContact?.Id);
+
+	public string ViewLink => $"/View/{CurrentContact?.Id}";
+
+	public bool DeleteConfirmation { get; set; }
+
+	private int _lastContact = -1;
+
+	protected override void OnParametersSet() {
+		if (CurrentContact != null && CurrentContact.Id != _lastContact) {
+			_lastContact = CurrentContact.Id;
+			DeleteConfirmation = false;
+		}
+
+		base.OnParametersSet();
+	}
+
+	public async Task ConfirmAsync(bool confirmed) {
+		if (confirmed) {
+			await DeleteAsync();
+		}
+		else {
+			DeleteConfirmation = false;
+			await Wrapper.DeleteRequested.InvokeAsync(0);
+		}
+	}
+
+	public Task DeleteRequestAsync() {
+		DeleteConfirmation = true;
+		return Wrapper.DeleteRequested.InvokeAsync(CurrentContact.Id);
+	}
+
+	private Task DeleteAsync() {
+		return DeleteContact.InvokeAsync(CurrentContact);
+	}
+
+	public string Name => Filters.ShowFirstNameFirst ? $"{CurrentContact?.FirstName} {CurrentContact?.LastName}" : $"{CurrentContact?.LastName}, {CurrentContact?.FirstName}";
+
+}

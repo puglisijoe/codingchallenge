@@ -1,0 +1,39 @@
+﻿@using ContactListApp.Model
+@inject IPageHelper PageHelper
+@inject IContactFilters Filters
+
+<div class="row">
+	<div class="col-12 col-sm-6 col-lg-4 col-xl-3 p-1">
+		Page @PageHelper.Page of @PageHelper.PageCount: showing @PageHelper.PageItems of
+		@PageHelper.TotalItemCount items.
+	</div>
+	<div class="col-12 col-sm-6 col-lg-8 col-xl-9 p-1">
+		<a disabled="@(Filters.Loading || !PageHelper.HasPrev)" class="btn btn-primary @Disabled(PageHelper.HasPrev)"
+		   href="/@PageHelper.PrevPage">
+			Previous
+		</a>
+		<a disabled="@(Filters.Loading || !PageHelper.HasNext)" class="btn btn-primary @Disabled(PageHelper.HasNext)"
+		   href="/@PageHelper.NextPage">
+			Next
+		</a>
+	</div>
+</div>
+
+@code {
+
+	/// <summary>
+	///     This will force refresh on changes.
+	/// </summary>
+	[CascadingParameter]
+	public GridWrapper Wrapper { get; set; }
+
+	/// <summary>
+	///     Emit the disabled class as needed.
+	/// </summary>
+	/// <param name="flag">The flag to test.</param>
+	/// <returns>"disabled" or empty string.</returns>
+	public string Disabled(bool flag) {
+		return Filters.Loading || !flag ? "disabled" : string.Empty;
+	}
+
+}

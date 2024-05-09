@@ -1,2 +1,7 @@
 # codingchallenge
-Saberin coding challenge
+
+# Get Started
+
+Add-Migration -Context ApplicationAuditDbContext Initial
+Update-Database -Context ApplicationAuditDbContext
+

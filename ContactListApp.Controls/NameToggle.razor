@@ -1,0 +1,18 @@
+﻿@using ContactListApp.Model
+@inject IContactFilters Filters
+
+<button class="btn btn-primary" @onclick="async () => await ToggleAsync()">Show Last Name, First Name</button>
+&nbsp;
+
+@code {
+
+	[CascadingParameter] public GridWrapper Wrapper { get; set; }
+
+	public string ButtonText => Filters.ShowFirstNameFirst ? "Show Last Name, First Name" : "Show First Name, Last Name";
+
+	public Task ToggleAsync() {
+		Filters.ShowFirstNameFirst = !Filters.ShowFirstNameFirst;
+		return Wrapper.FilterChanged.InvokeAsync(this);
+	}
+
+}

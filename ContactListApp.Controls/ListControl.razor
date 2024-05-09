@@ -1,0 +1,155 @@
+﻿@using System.Security.Claims
+@using ContactListApp.BaseRepository
+@using ContactListApp.Model
+@inject ClaimsPrincipal User
+@inject IBasicRepository<Contact> Repo
+@inject NavigationManager Nav
+@inject IContactFilters Filters
+@inject GridQueryAdapter QueryAdapter
+
+<h1>Contacts</h1>
+<GridWrapper @ref="Wrapper"
+             FilterChanged="async () => await ReloadAsync()"
+             DeleteRequested="id => Wrapper.DeleteRequestId = id">
+	<div class="container-fluid contacts-grid">
+		<div class="row">
+			<div class="col-12 col-sm-6 col-md-4 col-lg-3 p-1">
+				<NameToggle/>
+			</div>
+			<div class="col-12 col-sm-6 col-md-8 col-lg-9 p-1">
+				<TextFilter/>
+			</div>
+		</div>
+		<div class="row">&nbsp;</div>
+		<Pager/>
+		<div class="row">&nbsp;</div>
+		<ContactListHeader/>
+		@if (Filters.Loading || Contacts == null) {
+			<div class="row">
+				<div class="col-12 alert alert-info">
+					Loading ...
+				</div>
+			</div>
+		}
+		@if (Contacts != null && Contacts.Count == 0) {
+			<div class="row">
+				<div class="col-12 alert alert-warning">
+					No contacts found.
+				</div>
+			</div>
+		}
+		@if (Contacts != null && Contacts.Count > 0) {
+			@foreach (Contact contact in Contacts) {
+				<ContactListRow CurrentContact="@contact"
+				                DeleteContact="@(async c => await DeleteContactAsync(c))"/>
+			}
+		}
+	</div>
+</GridWrapper>
+
+@code {
+
+	/// <summary>
+	///     Reference to the wrapper
+	/// </summary>
+	public GridWrapper Wrapper { get; set; }
+
+	/// <summary>
+	///     The <see cref="ICollection{Contact}" /> to expose on the page.
+	/// </summary>
+	public ICollection<Contact> Contacts { get; set; }
+
+	private int _lastPage = -1;
+
+	/// <summary>
+	///     Allow route-based navigation.
+	/// </summary>
+	[Parameter]
+	public int Page {
+		get => Filters.PageHelper.Page;
+		set => Filters.PageHelper.Page = value;
+	}
+
+	/// <summary>
+	///     This delegate requests the collection refresh so it can be handled
+	///     appropriately on client vs. server.
+	/// </summary>
+	[Parameter]
+	public Func<IBasicRepository<Contact>, Action<ICollection<Contact>>, Task> FetchContactsAsync { get; set; }
+
+	/// <summary>
+	///     Initial load.
+	/// </summary>
+	/// <param name="firstRender"><c>True</c> on first render.</param>
+	/// <returns>A <see cref="Task" />.</returns>
+	protected override void OnAfterRender(bool firstRender) {
+		if (_lastPage < 1) {
+			Nav.NavigateTo("/1");
+			return;
+		}
+
+		if (Filters.PageHelper.PageCount > 0) {
+			if (Page < 1) {
+				Nav.NavigateTo("/1");
+				return;
+			}
+
+			if (Page > Filters.PageHelper.PageCount) {
+				Nav.NavigateTo($"/{Filters.PageHelper.PageCount}");
+				return;
+			}
+		}
+
+		base.OnAfterRender(firstRender);
+	}
+
+	/// <summary>
+	///     Navigation occurred.
+	/// </summary>
+	/// <returns>A <see cref="Task" />.</returns>
+	protected override async Task OnParametersSetAsync() {
+		if (Page != _lastPage) {
+			_lastPage = Page;
+
+			// refresh based on new page
+			await ReloadAsync();
+		}
+
+		await base.OnParametersSetAsync();
+	}
+
+	/// <summary>
+	///     Loads the current page.
+	/// </summary>
+	/// <returns>A <see cref="Task" />.</returns>
+	private async Task ReloadAsync() {
+		// already in progress, don't duplicate
+		if (Filters.Loading || Page < 1) {
+			return;
+		}
+
+		Filters.Loading = true;
+
+		if (Wrapper != null) {
+			Wrapper.DeleteRequestId = 0;
+		}
+
+		Contacts = null;
+		await FetchContactsAsync(Repo, contacts => Contacts = contacts);
+
+		Filters.Loading = false;
+	}
+
+	/// <summary>
+	///     Logic to delete the <see cref="Contact" />.
+	/// </summary>
+	/// <param name="contact">The <see cref="Contact" /> to delete.</param>
+	/// <returns>A <see cref="Task" />.</returns>
+	public async Task DeleteContactAsync(Contact contact) {
+		Filters.Loading = true;
+		await Repo.DeleteAsync(contact.Id, User);
+		Filters.Loading = false;
+		await ReloadAsync();
+	}
+
+}

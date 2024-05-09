@@ -1,0 +1,49 @@
+﻿@using ContactListApp.Model
+@inject IContactFilters Filters
+
+<div class="row contact-header">
+	<div class="@Columns.EditColumn">&nbsp;</div>
+	<div class="@Columns.GetClassForColumn(ContactFilterColumns.Name)"
+	     @onclick="@(async () => await ToggleAsync(ContactFilterColumns.Name))">
+		<SortIndicator Column="@(ContactFilterColumns.Name)"/> Name
+	</div>
+	<div class="@Columns.GetClassForColumn(ContactFilterColumns.Phone)"
+	     @onclick="@(async () => await ToggleAsync(ContactFilterColumns.Phone))">
+		<SortIndicator Column="@(ContactFilterColumns.Phone)"/> Phone
+	</div>
+	<div class="@Columns.GetClassForColumn(ContactFilterColumns.Street)"
+	     @onclick="@(async () => await ToggleAsync(ContactFilterColumns.Street))">
+		<SortIndicator Column="@(ContactFilterColumns.Street)"/> Street Address
+	</div>
+	<div class="@Columns.GetClassForColumn(ContactFilterColumns.City)"
+	     @onclick="@(async () => await ToggleAsync(ContactFilterColumns.City))">
+		<SortIndicator Column="@(ContactFilterColumns.City)"/> City
+	</div>
+	<div class="@Columns.GetClassForColumn(ContactFilterColumns.State)"
+	     @onclick="@(async () => await ToggleAsync(ContactFilterColumns.State))">
+		<SortIndicator Column="@(ContactFilterColumns.State)"/> State
+	</div>
+	<div class="@Columns.GetClassForColumn(ContactFilterColumns.ZipCode)"
+	     @onclick="@(async () => await ToggleAsync(ContactFilterColumns.ZipCode))">
+		<SortIndicator Column="@(ContactFilterColumns.ZipCode)"/> Zip Code
+	</div>
+</div>
+
+@code {
+
+	[CascadingParameter] public GridWrapper Wrapper { get; set; }
+
+	public ColumnService Columns = new ColumnService();
+
+	public Task ToggleAsync(ContactFilterColumns col) {
+		if (Filters.SortColumn == col) {
+			Filters.SortAscending = !Filters.SortAscending;
+		}
+		else {
+			Filters.SortColumn = col;
+		}
+
+		return Wrapper.FilterChanged.InvokeAsync(this);
+	}
+
+}

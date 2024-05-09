@@ -1,0 +1,18 @@
+﻿@using ContactListApp.Model
+@inject IContactFilters Filters
+
+@if (Column == Filters.SortColumn) {
+	<span>@Indicator</span>
+}
+else {
+	<span>&nbsp;</span>
+}
+
+@code {
+
+	[Parameter] public ContactFilterColumns Column { get; set; }
+
+
+	public string Indicator => Filters.SortAscending ? "▲" : "▼";
+
+}

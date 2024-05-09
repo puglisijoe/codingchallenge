@@ -1,0 +1,13 @@
+﻿@page "/edit/{ContactId:int}"
+@using Microsoft.AspNetCore.Authorization
+@inherits OwningComponentBase<ContactListApp.BaseRepository.IUnitOfWork<ContactListApp.Model.Contact>>
+
+@attribute [Authorize]
+
+<EditContactControl ContactId="@ContactId" Service="Service"/>
+
+@code {
+
+	[Parameter] public int ContactId { get; set; }
+
+}

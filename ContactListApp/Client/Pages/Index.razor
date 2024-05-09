@@ -1,0 +1,21 @@
+﻿@page "/"
+@page "/{Page:int}"
+@using ContactListApp.BaseRepository
+@using ContactListApp.Model
+@using Microsoft.AspNetCore.Authorization
+
+@attribute [Authorize]
+
+<ListControl Page="Page"
+             FetchContactsAsync="(repo, contacts) => FetchAsync(repo, contacts)"/>
+
+@code {
+
+	[Parameter] public int Page { get; set; }
+
+	public async Task FetchAsync(IBasicRepository<Contact> repo,
+		Action<ICollection<Contact>> contacts) {
+		contacts((await repo.GetListAsync()).ToList());
+	}
+
+}

@@ -1,0 +1,71 @@
+﻿@using System.Security.Claims
+@using ContactListApp.BaseRepository
+@using ContactListApp.Model
+@inject ClaimsPrincipal User
+@inject IBasicRepository<Contact> Repo
+@inject NavigationManager Nav
+@inject IPageHelper PageHelper
+
+@if (Contact != null) {
+	<ContactForm Busy="@Busy" Contact="@Contact" IsAdd="true"
+	             CancelRequest="Cancel"
+	             ValidationResult="@(async success => await ValidationResultAsync(success))"/>
+}
+@if (Success) {
+	<br/>
+	<div class="alert alert-success">The contact was successfully added.</div>
+}
+@if (Error) {
+	<br/>
+	<div class="alert alert-danger">Failed to update the contact (@ErrorMessage).</div>
+}
+
+@code {
+
+	public Contact Contact { get; set; }
+	public bool Busy;
+
+	public bool Success;
+
+	public bool Error;
+
+	public string ErrorMessage = string.Empty;
+
+	protected override Task OnInitializedAsync() {
+		Contact = new Contact();
+		return base.OnInitializedAsync();
+	}
+
+	public async Task ValidationResultAsync(bool success) {
+		if (!success) {
+			Success = false;
+			Error = false;
+			return;
+		}
+
+		Busy = true;
+
+		try {
+			Contact = await Repo.AddAsync(Contact, User);
+			Success = true;
+			Error = false;
+			// ready for the next
+			Contact = new Contact();
+			Busy = false;
+		}
+		catch (Exception ex) {
+			Success = false;
+			Error = true;
+			ErrorMessage = ex.Message;
+			Busy = false;
+		}
+	}
+
+	/// <summary>
+	///     Back to list.
+	/// </summary>
+	public void Cancel() {
+		Nav.NavigateTo($"/{PageHelper.Page}");
+	}
+
+}
